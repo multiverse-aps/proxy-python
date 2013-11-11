@@ -4,7 +4,7 @@ import time
 import logging
 
 from .compat import _urlparse, HTTPError
-from .transport import HTTPTransport, ThreadedHTTPTransport
+from .transport import HTTPTransport
 
 logger = logging.getLogger('proxy')
 
@@ -45,16 +45,16 @@ class HTTPProxy(object):
     def __init__(self, uri, transport_cls=HTTPTransport, timeout=1.0):
         self.uri_base = uri
         self.timeout = timeout
-        self.state = ClientState()
+        self._state = ClientState()
 
-        self.configure_logging()
+        self._configure_logging()
         cls = self.__class__
-        self.logger = logging.getLogger('%s.%s' % (cls.__module__, cls.__name__))
-        self.error_logger = logging.getLogger('proxy.errors')
+        self._logger = logging.getLogger('%s.%s' % (cls.__module__, cls.__name__))
+        self._error_logger = logging.getLogger('proxy.errors')
 
         self._transport = transport_cls(timeout=self.timeout)
 
-    def configure_logging(self):
+    def _configure_logging(self):
         logger = logging.getLogger('proxy')
 
         if logger.handlers:
@@ -64,28 +64,28 @@ class HTTPProxy(object):
         logger.setLevel(logging.INFO)
 
     def _successful_send(self):
-        self.state.set_success()
+        self._state.set_success()
 
     def _failed_send(self, e, url):
         if isinstance(e, HTTPError):
             body = e.read()
-            self.error_logger.error(
+            self._error_logger.error(
             'Unable to reach proxy server: %s (url: %s, body: %s)',
             e, url, body, exc_info=True,
             extra={'data': {'body': body[:200], 'remote_url': url}})
         else:
-            self.error_logger.error(
+            self._error_logger.error(
             'Unable to reach proxy server: %s (url: %s)', e, url,
             exc_info=True, extra={'data': {'remote_url': url}})
 
-        self.error_logger.error('Failed to submit event: %s', url)
-        self.state.set_fail()
+        self._error_logger.error('Failed to submit event: %s', url)
+        self._state.set_fail()
 
     def send_remote(self, endpoint, method="GET", data=None, params=None, headers=None, success_cb=None, failure_cb=None):
         uri = _urlparse.urljoin(self.uri_base, endpoint)
 
-        if not self.state.should_try():
-            self.error_logger.error('Try later, client is inactive: %s', uri)
+        if not self._state.should_try():
+            self._error_logger.error('Try later, client is inactive: %s', uri)
             return
 
         def _success_send(rv):
@@ -106,51 +106,42 @@ class RESTProxy(HTTPProxy):
     def __init__(self, uri, timeout=1.0):
         super(RESTProxy, self).__init__(uri, transport_cls=HTTPTransport, timeout=timeout)
 
-    def _parse_response(self, rv):
-        if rv.headers['Content-Type'] == 'application/json':
-            return rv.json()
-
-        return rv.text
-
-    def create(self, data=None, params=None, parse_response=True):
+    def create(self, data=None, params=None):
         rv = self.send_remote('', data=data, params=params)
 
         if not rv.status_code in (200, 201):
-            self.error_logger.warn('CREATE returned status code {}.'.format(rv.status_code))
+            self._error_logger.warn('CREATE returned status code {}.'.format(rv.status_code))
 
-        if parse_response:
-            return self._parse_response(rv)
+        return rv
 
-    def update(self, resource_id, data=None, params=None, parse_response=True):
+    def update(self, resource_id, data=None, params=None):
         rv = self.send_remote('{}/'.format(resource_id), data=data, params=params)
 
         if not rv.status_code == 200:
-            self.error_logger.warn('UPDATE returned status code {}.'.format(rv.status_code))
+            self._error_logger.warn('UPDATE returned status code {}.'.format(rv.status_code))
 
-        if parse_response:
-            return self._parse_response(rv)
+        return rv
 
     def delete(self, resource_id, params=None):
         rv = self.send_remote('{}/'.format(resource_id), params=params)
 
         if not rv.status_code == 204:
-            self.error_logger.warn('DELETE returned status code {}.'.format(rv.status_code))
+            self._error_logger.warn('DELETE returned status code {}.'.format(rv.status_code))
 
-    def get(self, resource_id, params=None, parse_response=True):
+        return rv
+
+    def get(self, resource_id, params=None):
         rv = self.send_remote('{}/'.format(resource_id), params=params)
 
         if not rv.status_code == 200:
-            self.error_logger.warn('GET {} returned status code {}.'.format(rv.url, rv.rv.status_code))
+            self._error_logger.warn('GET {} returned status code {}.'.format(rv.url, rv.rv.status_code))
 
-        if parse_response:
-            return self._parse_response(rv)
+        return rv
 
-    def getmany(self, params=None, parse_response=True):
+    def getmany(self, params=None):
         rv = self.send_remote('', "GET", params=params)
 
         if not rv.status_code == 200:
-            self.error_logger.warn('GET {} returned status code {}.'.format(rv.url, rv.status_code))
+            self._error_logger.warn('GET {} returned status code {}.'.format(rv.url, rv.status_code))
 
         return rv
-        if parse_response:
-            return self._parse_response(rv)
