@@ -1,0 +1,13 @@
+language: python
+python:
+  - "2.7"
+  - "3.2"
+  - "3.3"
+install:
+  # this fixes SemLock issues on travis
+  - "make test_setup"
+  - "python setup.py develop"
+env:
+  matrix: 
+    - COMMAND="make test"
+script: "$COMMAND"
