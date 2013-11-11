@@ -19,7 +19,7 @@ def run_setup(with_binary):
 
     setup(
         name='proxy-python',
-        version='0.1.0',
+        version='0.2.0',
         license='MIT',
         url='https://github.com/simonz05/proxy-python/',
         author='Simon Zimmermann',
