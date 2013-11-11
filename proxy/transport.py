@@ -87,36 +87,52 @@ class AsyncWorker(object):
 
             time.sleep(0)
 
+class Response(object):
+    def __init__(self, res):
+        self._obj = res
+
+    def __getattr__(self, attrib):
+        return getattr(self._obj, attrib)
+
+    def has_data(self):
+        if not hasattr(self, '_has_data'):
+            content_length = self.headers.get('Content-Length')
+
+            if content_length:
+                self._has_data = int(content_length) > 0
+            else:
+                self._has_data = len(self.text) > 0
+
+        return self._has_data
+
+    def data(self):
+        if not self.has_data():
+            return ''
+
+        if 'application/json' in self.headers.get('Content-Type'):
+            return self.json()
+
+        return self.text
+
 class HTTPTransport(object):
     async = False
 
     def __init__(self, timeout=None):
         self.timeout = timeout or 1.0
 
-    def raise_for_status(self, res):
-        """Raises :class:`requests.HTTPError` if HTTP status > 407."""
-
-        http_error_msg = ''
-
-        if 407 < res.status_code < 500:
-            http_error_msg = '%s Client Error: %s' % (self.status_code, self.reason)
-
-        elif 500 <= res.status_code < 600:
-            http_error_msg = '%s Server Error: %s' % (self.status_code, self.reason)
-
-        if http_error_msg:
-            raise requests.HTTPError(http_error_msg, response=res)
-
     def send_sync(self, url, method, data=None, params=None, headers=None, success_cb=None, failure_cb=None):
         try:
-            res = getattr(requests, method.lower())(url, params=params, data=data, headers=headers, timeout=self.timeout)
-            self.raise_for_status(res)
+            rv = getattr(requests, method.lower())(url, params=params, data=data, headers=headers, timeout=self.timeout)
+            res = Response(rv)
+            res.raise_for_status()
             if success_cb:
                 success_cb(res)
             return res
         except Exception as e:
             if failure_cb:
                 failure_cb(e)
+
+            raise e
 
     send = send_sync
 
