@@ -139,7 +139,7 @@ class RESTProxy(HTTPProxy):
         return rv
 
     def getmany(self, method="GET", params=None):
-        rv = self.send_remote('', "GET", method=method, params=params)
+        rv = self.send_remote('', method=method, params=params)
 
         if not rv.status_code == 200:
             self._error_logger.warn('GET {} returned status code {}.'.format(rv.url, rv.status_code))
