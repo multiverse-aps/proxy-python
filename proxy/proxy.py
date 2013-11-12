@@ -89,6 +89,7 @@ class HTTPProxy(object):
             return
 
         def _success_send(rv):
+            self._error_logger.info('send_remote {} {}ms'.format(uri, rv.elapsed.microseconds/1000.0))
             self._successful_send()
 
             if success_cb:
