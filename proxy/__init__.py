@@ -9,7 +9,7 @@
     :license: MIT, see LICENSE for details.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.3.0'
 __all__ = ['HTTPProxy', 'RESTProxy', 'HTTPTransport', 'ThreadedHTTPTransport']
 
 from .proxy import HTTPProxy, RESTProxy
