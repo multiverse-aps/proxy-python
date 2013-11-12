@@ -123,16 +123,26 @@ class HTTPTransport(object):
     def send_sync(self, url, method, data=None, params=None, headers=None, success_cb=None, failure_cb=None):
         try:
             rv = getattr(requests, method.lower())(url, params=params, data=data, headers=headers, timeout=self.timeout)
+            rv.raise_for_status()
+
             res = Response(rv)
-            res.raise_for_status()
+
             if success_cb:
                 success_cb(res)
-            return res
-        except Exception as e:
-            if failure_cb:
-                failure_cb(e)
 
-            raise e
+            return res
+        except requests.HTTPError as ex:
+            ex.response = Response(ex.response)
+
+            if failure_cb:
+                failure_cb(ex)
+
+            raise ex
+        except Exception as ex:
+            if failure_cb:
+                failure_cb(ex)
+
+            raise ex
 
     send = send_sync
 
