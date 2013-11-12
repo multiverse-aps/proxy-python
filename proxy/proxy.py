@@ -100,46 +100,46 @@ class HTTPProxy(object):
             if failure_cb:
                 failure_cb()
 
-        return self._transport.send(uri, method, data=data, headers=headers, success_cb=_success_send, failure_cb=_failed_send)
+        return self._transport.send(uri, method, data=data, params=params, headers=headers, success_cb=_success_send, failure_cb=_failed_send)
 
 class RESTProxy(HTTPProxy):
     def __init__(self, uri, timeout=1.0):
         super(RESTProxy, self).__init__(uri, transport_cls=HTTPTransport, timeout=timeout)
 
-    def create(self, data=None, params=None):
-        rv = self.send_remote('', data=data, params=params)
+    def create(self, method="POST", data=None, params=None):
+        rv = self.send_remote('', method=method, data=data, params=params)
 
         if not rv.status_code in (200, 201):
             self._error_logger.warn('CREATE returned status code {}.'.format(rv.status_code))
 
         return rv
 
-    def update(self, resource_id, data=None, params=None):
-        rv = self.send_remote('{}/'.format(resource_id), data=data, params=params)
+    def update(self, resource_id, method="PUT", data=None, params=None):
+        rv = self.send_remote('{}/'.format(resource_id), method=method, data=data, params=params)
 
         if not rv.status_code == 200:
             self._error_logger.warn('UPDATE returned status code {}.'.format(rv.status_code))
 
         return rv
 
-    def delete(self, resource_id, params=None):
-        rv = self.send_remote('{}/'.format(resource_id), params=params)
+    def delete(self, resource_id, method="DELETE", params=None):
+        rv = self.send_remote('{}/'.format(resource_id), method=method, params=params)
 
         if not rv.status_code == 204:
             self._error_logger.warn('DELETE returned status code {}.'.format(rv.status_code))
 
         return rv
 
-    def get(self, resource_id, params=None):
-        rv = self.send_remote('{}/'.format(resource_id), params=params)
+    def get(self, resource_id, method="GET", params=None):
+        rv = self.send_remote('{}/'.format(resource_id), method=method, params=params)
 
         if not rv.status_code == 200:
             self._error_logger.warn('GET {} returned status code {}.'.format(rv.url, rv.rv.status_code))
 
         return rv
 
-    def getmany(self, params=None):
-        rv = self.send_remote('', "GET", params=params)
+    def getmany(self, method="GET", params=None):
+        rv = self.send_remote('', "GET", method=method, params=params)
 
         if not rv.status_code == 200:
             self._error_logger.warn('GET {} returned status code {}.'.format(rv.url, rv.status_code))
