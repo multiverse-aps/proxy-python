@@ -8,6 +8,11 @@ from .transport import HTTPTransport
 
 logger = logging.getLogger('proxy')
 
+class ProxyUnavailable(Exception):
+    """
+    Raised when the proxy server is unavailable.
+    """
+
 class ClientState(object):
     ONLINE = 1
     ERROR = 0
@@ -86,7 +91,7 @@ class HTTPProxy(object):
 
         if not self._state.should_try():
             self._error_logger.error('Try later, client is inactive: %s', uri)
-            return
+            raise ProxyUnavailable()
 
         def _success_send(rv):
             self._error_logger.info('send_remote {} {}ms'.format(uri, rv.elapsed.microseconds/1000.0))
