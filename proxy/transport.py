@@ -101,7 +101,7 @@ class Response(object):
             if content_length:
                 self._has_data = int(content_length) > 0
             else:
-                self._has_data = len(self.text) > 0
+                self._has_data = len(self.content) > 0
 
         return self._has_data
 
@@ -112,17 +112,26 @@ class Response(object):
         if 'application/json' in self.headers.get('Content-Type'):
             return self.json()
 
-        return self.text
+        return self.content
 
 class HTTPTransport(object):
     async = False
 
-    def __init__(self, timeout=None):
+    def __init__(self, keep_alive=False, timeout=None):
+        self.keep_alive = keep_alive
         self.timeout = timeout or 1.0
+
+    def client(self):
+        if self.keep_alive:
+            if not hasattr(self, '_session'):
+                self._session = requests.session()
+            return self._session
+        return requests
 
     def send_sync(self, url, method, data=None, params=None, headers=None, success_cb=None, failure_cb=None):
         try:
-            rv = getattr(requests, method.lower())(url, params=params, data=data, headers=headers, timeout=self.timeout)
+            httpclient = getattr(self.client(), method.lower())
+            rv = httpclient(url, params=params, data=data, headers=headers, timeout=self.timeout)
             rv.raise_for_status()
 
             res = Response(rv)

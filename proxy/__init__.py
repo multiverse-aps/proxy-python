@@ -10,7 +10,8 @@
 """
 
 __version__ = '0.3.1'
-__all__ = ['HTTPProxy', 'RESTProxy', 'HTTPTransport', 'ThreadedHTTPTransport']
+__all__ = ['HTTPProxy', 'RESTProxy', 'HTTPTransport', 'ThreadedHTTPTransport',
+        'ProxyUnavailable']
 
-from .proxy import HTTPProxy, RESTProxy
+from .proxy import HTTPProxy, RESTProxy, ProxyUnavailable
 from .transport import HTTPTransport, ThreadedHTTPTransport
