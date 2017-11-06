@@ -128,10 +128,10 @@ class HTTPTransport(object):
             return self._session
         return requests
 
-    def send_sync(self, url, method, data=None, params=None, headers=None, success_cb=None, failure_cb=None):
+    def send_sync(self, url, method, data=None, params=None, headers=None, files=None, success_cb=None, failure_cb=None):
         try:
             httpclient = getattr(self.client(), method.lower())
-            rv = httpclient(url, params=params, data=data, headers=headers, timeout=self.timeout)
+            rv = httpclient(url, params=params, data=data, headers=headers, files=files, timeout=self.timeout)
             rv.raise_for_status()
 
             res = Response(rv)
