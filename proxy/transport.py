@@ -115,7 +115,7 @@ class Response(object):
         return self.content
 
 class HTTPTransport(object):
-    async = False
+    asyncronous = False
 
     def __init__(self, keep_alive=False, timeout=None):
         self.keep_alive = keep_alive
@@ -156,7 +156,7 @@ class HTTPTransport(object):
     send = send_sync
 
 class ThreadedHTTPTransport(HTTPTransport):
-    async = True
+    asyncronous = True
 
     def get_worker(self):
         if not hasattr(self, '_worker'):
