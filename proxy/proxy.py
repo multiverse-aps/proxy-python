@@ -116,7 +116,7 @@ class HTTPProxy(object):
     def send_closing(self, *args, **kwargs):
         return closing(self.send(*args, **kwargs))
 
-    def send(self, endpoint, method="GET", data=None, params=None, headers=None, files=None, success_cb=None, failure_cb=None):
+    def send(self, endpoint, method="GET", data=None, json=None, params=None, headers=None, files=None, success_cb=None, failure_cb=None):
         uri = _urlparse.urljoin(self.uri_base, endpoint)
 
         if not self._state.should_try():
@@ -136,7 +136,7 @@ class HTTPProxy(object):
             if failure_cb:
                 failure_cb()
 
-        return self._transport.send(uri, method, data=data, params=params, headers=headers, files=None, success_cb=_success_send, failure_cb=_failed_send)
+        return self._transport.send(uri, method, data=data, json=json, params=params, headers=headers, files=None, success_cb=_success_send, failure_cb=_failed_send)
 
 class RESTProxy(HTTPProxy):
     def __init__(self, uri, timeout=1.0, keep_alive=False):
